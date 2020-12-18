@@ -5,7 +5,7 @@
 '''
 
 
-import urlparse,os,sys
+import os,sys
 
 import xbmc,xbmcaddon,xbmcplugin,xbmcgui,xbmcvfs
 
@@ -78,25 +78,29 @@ deleteDir = xbmcvfs.rmdir
 
 listDir = xbmcvfs.listdir
 
-transPath = xbmc.translatePath
+# Code to map the old translatePath
+try:
+    translatePath = xbmcvfs.translatePath
+except AttributeError:
+    translatePath = xbmc.translatePath
 
-skinPath = xbmc.translatePath('special://skin/')
+skinPath = translatePath('special://skin/')
 
-addonPath = xbmc.translatePath(addonInfo('path'))
+addonPath = translatePath(addonInfo('path'))
 
 AddonID = 'script.ezmaintenanceplus'
-artPath = xbmc.translatePath(os.path.join('special://home/addons/' + AddonID, 'art'))
+artPath = translatePath(os.path.join('special://home/addons/' + AddonID, 'art'))
 # DIRECTORIES
-backupdir   	 =  xbmc.translatePath(os.path.join('special://home/backupdir',''))   
-packagesdir    	 =  xbmc.translatePath(os.path.join('special://home/addons/packages',''))
-USERDATA     	 =  xbmc.translatePath(os.path.join('special://home/userdata',''))
-ADDON_DATA  	 =  xbmc.translatePath(os.path.join(USERDATA, 'addon_data'))
-HOME         	 =	xbmc.translatePath('special://home/')
-HOME_ADDONS      =  xbmc.translatePath('special://home/addons')
+backupdir        =  translatePath(os.path.join('special://home/backupdir',''))
+packagesdir      =  translatePath(os.path.join('special://home/addons/packages',''))
+USERDATA         =  translatePath(os.path.join('special://home/userdata',''))
+ADDON_DATA       =  translatePath(os.path.join(USERDATA, 'addon_data'))
+HOME             =  translatePath('special://home/')
+HOME_ADDONS      =  translatePath('special://home/addons')
 
 
 def addonIcon():
-    path = xbmc.translatePath(os.path.join('special://home/addons/' + AddonID , 'icon.png'))
+    path = translatePath(os.path.join('special://home/addons/' + AddonID , 'icon.png'))
     return path
 
 def addonThumb():
@@ -119,7 +123,7 @@ def addonBanner():
 
 
 def addonFanart():
-    return xbmc.translatePath(os.path.join('special://home/addons/' + AddonID , 'fanart.jpg'))
+    return translatePath(os.path.join('special://home/addons/' + AddonID , 'fanart.jpg'))
 
 
 def addonNext():
@@ -140,7 +144,7 @@ def infoDialog(message, heading=addonInfo('name'), icon='', time=None, sound=Fal
 
 
 def yesnoDialog(line1, line2, line3, heading=addonInfo('name'), nolabel='', yeslabel=''):
-    return dialog.yesno(heading, line1, line2, line3, nolabel, yeslabel)
+    return dialog.yesno(heading, line1 + '\n' + line2 + '\n' + line3, nolabel, yeslabel)
 
 
 def selectDialog(list, heading=addonInfo('name')):

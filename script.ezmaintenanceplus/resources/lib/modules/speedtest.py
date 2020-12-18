@@ -28,6 +28,7 @@ import datetime
 import platform
 import threading
 import xml.parsers.expat
+from backtothefuture import unicode, PY2
 
 try:
     import gzip
@@ -35,17 +36,17 @@ try:
 except ImportError:
     gzip = None
     GZIP_BASE = object
-	
+
 try:
-	import xml.etree.ElementTree as ET
+    import xml.etree.ElementTree as ET
 except:
-	from xml.dom import minidom as DOM
-	ET = None
+    from xml.dom import minidom as DOM
+    ET = None
 
 __version__ = '2.0.0'
 
 import time
-import xbmcgui
+import xbmcgui, xbmcaddon
 dp = xbmcgui.DialogProgress()
 dp.create('Speedtest by Ookla', 'INITIALIZING...')
 downloadString = '0'
@@ -174,7 +175,7 @@ except ImportError:
     try:
         _py3_utf8_stdout = _Py3Utf8Output(sys.stdout)
         _py3_utf8_stderr = _Py3Utf8Output(sys.stderr)
-    except OSError:
+    except:
         # sys.stdout/sys.stderr is not a compatible stdout/stderr object
         # just use it and hope things go ok
         _py3_utf8_stdout = sys.stdout
@@ -1045,16 +1046,16 @@ class Speedtest(object):
             headers['Accept-Encoding'] = 'gzip'
         request = build_request('://www.speedtest.net/speedtest-config.php',
                                 headers=headers, secure=self._secure)
-								
-								
+
+
         uh, e = catch_request(request, opener=self._opener)
         if e:
             raise ConfigRetrievalError(e)
         configxml = []
 
         stream = get_response_stream(uh)
-		
-        print stream
+
+        print(stream)
 
         while 1:
             try:
@@ -1066,14 +1067,17 @@ class Speedtest(object):
         stream.close()
         uh.close()
 
-        print configxml
+        print(configxml)
         if int(uh.code) != 200:
             return None
 
         printer('Config XML:\n%s' % ''.encode().join(configxml), debug=True)
 
+        #buf = ''.join(configxml)
+        buf = ''.encode().join(configxml)
+
         try:
-            root = ET.fromstring(''.encode().join(configxml))
+            root = ET.fromstring(buf)
             server_config = root.find('server-config').attrib
             download = root.find('download').attrib
             upload = root.find('upload').attrib
@@ -1081,7 +1085,7 @@ class Speedtest(object):
             client = root.find('client').attrib
 
         except:
-            root = DOM.parseString(''.join(configxml))
+            root = DOM.parseString(buf)
             server_config = get_attributes_by_tag_name(root, 'server-config')
             download = get_attributes_by_tag_name(root, 'download')
             upload = get_attributes_by_tag_name(root, 'upload')
@@ -1203,11 +1207,13 @@ class Speedtest(object):
                         debug=True)
 
                 try:
+                    #buf = ''.join(serversxml)
+                    buf = ''.encode().join(serversxml)
                     try:
-                        root = ET.fromstring(''.encode().join(serversxml))
+                        root = ET.fromstring(buf)
                         elements = root.getiterator('server')
                     except AttributeError:
-                        root = DOM.parseString(''.join(serversxml))
+                        root = DOM.parseString(buf)
                         elements = root.getElementsByTagName('server')
                 except (SyntaxError, xml.parsers.expat.ExpatError):
                     raise ServersRetrievalError()
@@ -1434,7 +1440,7 @@ class Speedtest(object):
         def consumer(q, request_count):
             while len(finished) < request_count:
                 thread = q.get(True)
-                while thread.isAlive():
+                while thread.is_alive():
                     thread.join(timeout=0.1)
                 finished.append(sum(thread.result))
                 callback(thread.i, request_count, end=True)
@@ -1447,9 +1453,9 @@ class Speedtest(object):
         start = timeit.default_timer()
         prod_thread.start()
         cons_thread.start()
-        while prod_thread.isAlive():
+        while prod_thread.is_alive():
             prod_thread.join(timeout=0.1)
-        while cons_thread.isAlive():
+        while cons_thread.is_alive():
             cons_thread.join(timeout=0.1)
 
         stop = timeit.default_timer()
@@ -1512,7 +1518,7 @@ class Speedtest(object):
         def consumer(q, request_count):
             while len(finished) < request_count:
                 thread = q.get(True)
-                while thread.isAlive():
+                while thread.is_alive():
                     thread.join(timeout=0.1)
                 finished.append(thread.result)
                 callback(thread.i, request_count, end=True)
@@ -1525,9 +1531,9 @@ class Speedtest(object):
         start = timeit.default_timer()
         prod_thread.start()
         cons_thread.start()
-        while prod_thread.isAlive():
+        while prod_thread.is_alive():
             prod_thread.join(timeout=0.1)
-        while cons_thread.isAlive():
+        while cons_thread.is_alive():
             cons_thread.join(timeout=0.1)
 
         stop = timeit.default_timer()
@@ -1663,13 +1669,13 @@ def validate_optional_args(args):
                              'unavailable' % (info[0], arg))
 
 
-	
+
 
 def printer(string, quiet=False, debug=False, error=False, timer=False, **kwargs):
     """Helper function print a string with various features"""
 
     global downloadString
-	
+
     if debug and not DEBUG:
         return
 
@@ -1689,17 +1695,24 @@ def printer(string, quiet=False, debug=False, error=False, timer=False, **kwargs
         if "Download:" in out: downloadString = out
         if "Upload:" in out: downloadString = downloadString + " |  " + out
         if downloadString != '0': label1 = downloadString
-        else: label1 = out				
+        else: label1 = out
         try:
-			if timer == True:
-				for i in range(0, 10):
-					count = i * 10
-					if downloadString != '0': label1 = downloadString
-					else: label1 = out
-					dp.update(count, label1, **kwargs)
-					time.sleep(1)
-				timer = False
-			else: dp.update(100, label1, **kwargs)
+            if timer == True:
+                for i in range(0, 10):
+                    count = i * 10
+                    if downloadString != '0': label1 = downloadString
+                    else: label1 = out
+                    buf = ''
+                    for key, value in kwargs.items():
+                        buf = buf + '\n' + value
+                    dp.update(count, label1 + buf)
+                    time.sleep(1)
+                timer = False
+            else:
+                buf = ''
+                for key, value in kwargs.items():
+                    buf = buf + '\n'  + value
+                dp.update(100, label1 + buf)
 
         except:pass
 
@@ -1712,7 +1725,7 @@ def shell():
 
     args = parse_args()
 
-    print args
+    print(args)
 
     # Print the version and exit
     if args.version:
@@ -1819,7 +1832,7 @@ def shell():
     if args.download:
         printer('Testing download speed', quiet,
                 end=('', '\n')[bool(debug)], error=False)
-        
+
         speedtest.download(callback=callback)
         printer('Download: %0.2f M%s/s' %
                 ((results.download / 1000.0 / 1000.0) / args.units[1],
@@ -1861,7 +1874,7 @@ def shell():
         printer('Share results: %s' % results.share())
         image = "%s"  % results.share()
         return image
-		
+
 class PopupWindow(xbmcgui.WindowDialog):
     def __init__(self, image):
         self.addControl(xbmcgui.ControlImage(340 , 210 , 600 , 270 ,image))
@@ -1869,7 +1882,7 @@ class PopupWindow(xbmcgui.WindowDialog):
 def main():
     try:
         image = shell()
-        
+
         window = PopupWindow(image)
         window.show()
         time.sleep(10)
@@ -1887,5 +1900,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-	
+
 
