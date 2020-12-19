@@ -934,7 +934,7 @@ class SpeedtestResults(object):
             raise ShareResultsSubmitFailure('Could not submit results to '
                                             'speedtest.net')
 
-        qsargs = parse_qs(response.decode())
+        qsargs = parse_qs(response.decode('UTF-8'))
         resultid = qsargs.get('resultid')
         if not resultid or len(resultid) != 1:
             raise ShareResultsSubmitFailure('Could not submit results to '
@@ -1278,7 +1278,7 @@ class Speedtest(object):
             uh.close()
 
         extension = re.findall('upload_?[Ee]xtension: "([^"]+)"',
-                               text.decode())
+                               text.decode('UTF-8'))
         if not extension:
             for ext in ['php', 'asp', 'aspx', 'jsp']:
                 try:
@@ -1288,7 +1288,7 @@ class Speedtest(object):
                 except Exception:
                     pass
                 else:
-                    data = f.read().strip().decode()
+                    data = f.read().strip().decode('UTF-8')
                     if (f.code == 200 and
                             len(data.splitlines()) == 1 and
                             re.match('size=[0-9]', data)):

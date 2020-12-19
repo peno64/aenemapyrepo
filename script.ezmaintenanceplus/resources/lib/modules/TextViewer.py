@@ -90,7 +90,7 @@ def text_view(loc='', data=''):
         return
     #contents = str(contents)
     if not  PY2:
-        contents = contents.decode()
+        contents = contents.decode('UTF-8')
     contents = contents.replace(' ERROR: ', ' [COLOR red]ERROR[/COLOR]: ') \
         .replace(' WARNING: ', ' [COLOR gold]WARNING[/COLOR]: ')
 

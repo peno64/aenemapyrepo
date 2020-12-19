@@ -68,8 +68,9 @@ def logView():
             TextViewer.text_view(selectedLog)
         elif select == 1:
             xbmc.executebuiltin('ActivateWindow(busydialognocancel)')
-            f = open(selectedLog, 'r')
+            f = open(selectedLog, 'rb')
             text = f.read()
+            text = text.decode('UTF-8')
             f.close()
             from resources.lib.modules import pastebin
             upload_Link = pastebin.api().paste(unicode(text))

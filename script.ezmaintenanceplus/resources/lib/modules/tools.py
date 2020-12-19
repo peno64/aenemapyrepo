@@ -17,6 +17,7 @@ import urllib
 import re
 import time
 import zipfile
+from math import trunc
 from resources.lib.modules import control
 from datetime import datetime
 from resources.lib.modules.backtothefuture import unicode, PY2
@@ -85,13 +86,13 @@ def advancedSettings():
     FREEMEM    =  xbmc.getInfoLabel("System.FreeMemory")
     BUFFER_F   =  re.sub('[^0-9]','',FREEMEM)
     BUFFER_F   = int(BUFFER_F) / 3
-    BUFFERSIZE = BUFFER_F * 1024 * 1024
+    BUFFERSIZE = trunc(BUFFER_F * 1024 * 1024)
     try: KODIV        =  float(xbmc.getInfoLabel("System.BuildVersion")[:4])
     except: KODIV = 16
 
 
     """,customlabel='Cancel'"""
-    choice = dialog.yesno(AddonTitle, 'FREE MEMORY: ' + str(FREEMEM) + '\n' + 'Based on your free Memory your optimal buffersize is: \n' + str(BUFFERSIZE) + ' Bytes' + ' ('  + str(BUFFER_F) + ' MB)' + '\n' + 'Choose an Option below...', yeslabel='Use Optimal',nolabel='Input a Value' )
+    choice = dialog.yesno(AddonTitle, 'Based on your free Memory your optimal buffersize is: \n' + str(BUFFERSIZE) + ' Bytes' + ' ('  + str(round(BUFFER_F)) + ' MB)' + '\n' + 'Note that your current advanced settings will be overwritten!' + '\n' + 'Choose an Option below or press ESC ESC to abort.', yeslabel='Use Optimal',nolabel='Input a Value' )
     if choice == 1:
         with open(XML_FILE, "w") as f:
             if KODIV >= 17: xml_data = xml_data_advSettings_New(str(BUFFERSIZE))
@@ -101,7 +102,7 @@ def advancedSettings():
             dialog.ok(AddonTitle,'Buffer Size Set to: ' + str(BUFFERSIZE) + '\n' + 'Please restart Kodi for settings to apply.')
 
     elif choice == 0:
-        BUFFERSIZE = _get_keyboard( default=str(BUFFERSIZE), heading="INPUT BUFFER SIZE (Bytes)", cancel="-")
+        BUFFERSIZE = _get_keyboard( default=str(BUFFERSIZE), heading="INPUT BUFFER SIZE (Bytes) or ESC/Cancel to abort", cancel="-")
         if BUFFERSIZE != "-":
             with open(XML_FILE, "w") as f:
                 if KODIV >= 17: xml_data = xml_data_advSettings_New(str(BUFFERSIZE))
